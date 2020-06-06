@@ -1,6 +1,6 @@
 # loans-ml
 
-This project predict whether online peer-to-peer loans are fully or partially funded. It was completed and presented at the 2019 InnovateGCL Competition at CapitalOne Headquarters, where it won the $100 best pitch prize in the FinTech category. 
+This project predicts whether online peer-to-peer loans are fully or partially funded. It was completed and presented at the 2019 InnovateGCL Competition at CapitalOne Headquarters, where it won the $100 best pitch prize in the FinTech category. 
 
 ## loan.csv
 
