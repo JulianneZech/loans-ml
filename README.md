@@ -24,4 +24,4 @@ A file with the loans from `loan.csv` after pre-processing is completed (drop re
 
 ## model.py
 
-
+code to use 5-fold cross-validation to train and evaluate different machine learning models on the data
