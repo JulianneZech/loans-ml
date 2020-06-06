@@ -19,11 +19,13 @@ import time
 import re
 warnings.filterwarnings('ignore', category=Warning)
 
-# classifying fully-funded and partially funded online peer to peer loans
 
-
-# https://www.kaggle.com/wendykan/lending-club-loan-data
 def prep_data():
+    """
+    create separate files with partially and fully funded loans
+
+    :return: write partially_funded.csv & fully_funded.csv
+    """
 
     # read full data set
     data = pd.read_csv("loan.csv")
@@ -34,8 +36,8 @@ def prep_data():
     print(partially_funded.shape)
 
     # create data frame with only fully funded loans
-    # take random sample with same number of records as partially_funded
     fully_funded = data[data['loan_amnt'] - data['funded_amnt'] == 0]
+    # take random sample with same number of records as partially_funded
     fully_funded = fully_funded.sample(n=partially_funded.shape[0], random_state=1)
 
     print(partially_funded.shape)
@@ -48,6 +50,11 @@ def prep_data():
 
 
 def preprocess():
+    """
+    drop redundant columns, clean formatting of certain columns, convert strings to ints, & impute missing values
+    :return: X: feature matrix
+             y: matrix of labels
+    """
 
     fully_funded = pd.read_csv("fully_funded.csv")
     partially_funded = pd.read_csv("partially_funded.csv")
@@ -132,13 +139,13 @@ def preprocess():
     partially_funded['purpose'] = partially_funded['purpose'].map(purpose_dict)
 
     # find unique values of initial list status
-    #print(fully_funded['initial_list_status'].unique())
-    #print(partially_funded['initial_list_status'].unique())
+    print(fully_funded['initial_list_status'].unique())
+    print(partially_funded['initial_list_status'].unique())
 
     # convert to numeric
     status_dict = {"w": 0, "f": 1}
-    #fully_funded['initial_list_status'] = fully_funded['initial_list_status'].map(status_dict)
-   # partially_funded['initial_list_status'] = partially_funded['initial_list_status'].map(status_dict)
+    fully_funded['initial_list_status'] = fully_funded['initial_list_status'].map(status_dict)
+    partially_funded['initial_list_status'] = partially_funded['initial_list_status'].map(status_dict)
 
     # find unique values of application type
     print(fully_funded['application_type'].unique())
@@ -188,12 +195,13 @@ def preprocess():
     return X, y
 
 
-# naive bayes
 def fit_nb(X, y):
-    # args:
-    # X: predictor frame
-    # y: targets
-    # returns: nb (naive bayes model object)
+    """
+    fit and return naive bayes model
+    :param X: predictor frame
+    :param y: targets
+    :return: nb (naive bayes model object)
+    """
 
     nb = GaussianNB(priors=None, var_smoothing=1e-09)
     nb.fit(X, y)
@@ -201,12 +209,13 @@ def fit_nb(X, y):
     return nb
 
 
-# logistic regression
 def fit_lr(X, y):
-    # args:
-    # X: predictor frame
-    # y: targets
-    # returns: lr (logistic regression model object)
+    """
+    fit and return logistic regression model
+    :param X: predictor frame
+    :param y: targets
+    :return: lr (logistic regression model object)
+    """
 
     # search for optimal parameters
     gridsearch = GridSearchCV(
@@ -228,12 +237,13 @@ def fit_lr(X, y):
     return [lr, best_params]
 
 
-# random forest
 def fit_rf(X, y):
-    # args:
-    # X: predictor frame
-    # y: targets
-    # returns: rf (random forest model object)
+    """
+    fit and return random forest model
+    :param X: predictor frame
+    :param y: targets
+    :return: rf (random forest model object)
+    """
 
     # search for optimal parameters
     gridsearch = GridSearchCV(
@@ -260,12 +270,13 @@ def fit_rf(X, y):
     return [rf, best_params, feature_importances]
     
 
-# extremely randomized trees
 def fit_xrt(X, y):
-    # args:
-    # X: predictor frame
-    # y: targets
-    # returns: xrt (extremely randomized tree model object)
+    """
+    fit and return extremely randomized tree model
+    :param X: predictor frame
+    :param y: targets
+    :return: xrt (extremely randomized tree model object)
+    """
 
     # search for optimal parameters
     gridsearch = GridSearchCV(
@@ -288,12 +299,13 @@ def fit_xrt(X, y):
     return [xrt, best_params]
 
 
-# gradient boosted tree model
 def fit_gbm(X, y):
-    # args:
-    # X: predictor frame
-    # y: targets
-    # returns: gbm (gradient boosted tree model object)
+    """
+    fit and return gradient boosted tree model
+    :param X: predictor frame
+    :param y: targets
+    :return: gbm (gradient boosted tree model object)
+    """
 
     # search for optimal parameters
     gridsearch = GridSearchCV(
@@ -318,8 +330,13 @@ def fit_gbm(X, y):
     return [gbm, best_params]
 
 
-# ensemble classifier
 def fit_ensemble(X, y, estimators):
+    """
+    fit and return ensemble model
+    :param X: predictor frame
+    :param y: targets
+    :return: ensemble (ensemble model object)
+    """
 
     # declare VotingClassifier with one model of each type as estimators
     ensemble = VotingClassifier(estimators, voting='soft')
@@ -328,8 +345,18 @@ def fit_ensemble(X, y, estimators):
     return ensemble
 
 
-# get predictions on test set for fitted model
 def predict(X, y, model, type, params, fold, importances, model_dict):
+    """
+    print evaluation metrics to console
+    :param X: predictor frame
+    :param y: targets
+    :param model: model object
+    :param type: type of model
+    :param params: fitted model parameters
+    :param fold: number of cross-validation fold
+    :param importances: random forest feature importances
+    :param model_dict: dictionary mapping informal names to formal names (i.e. nb: Naive Bayes)
+    """
 
     # get predictions
     preds = model.predict(X)
@@ -365,6 +392,9 @@ def predict(X, y, model, type, params, fold, importances, model_dict):
 
 
 def main():
+    """
+    use 5-fold cross-validation to train and evaluate different models
+    """
 
     # prepare and pre-process data
     prep_data()
@@ -374,7 +404,6 @@ def main():
     kf = KFold(n_splits=5)
 
     models = ['nb', 'lr', 'rf', 'xrt', 'gbm', 'ens']
-    #models = ['rf']
 
     # map model acronyms to their proper names for convenience
     model_dict = {"nb": "Naive Bayes", "lr": "Logistic Regression", "rf": "Random Forest",
